@@ -11,13 +11,15 @@ import scrapy
 class FirstItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    jobClass = scrapy.Field()
-    jobUrl = scrapy.Field()
+    movClass = scrapy.Field()#电影分类
+    movUrl = scrapy.Field()#电影分类的URL
 
-    jobName = scrapy.Field()
-    jobMoney = scrapy.Field()
-    jobNeed = scrapy.Field()
-    jobCompany = scrapy.Field()
-    jobType = scrapy.Field()
-    jobSpesk = scrapy.Field()
+    mvName = scrapy.Field()
+    mvUrl = scrapy.Field()
+
+    downLoadUrl = scrapy.Field()#下载地址
+    downLoadName = scrapy.Field()#下载电影的名称
+    downimgurl = scrapy.Field()#电影海报图片
+    mvdesc = scrapy.Field()#电影的详情介绍
+    downdtitle = scrapy.Field()#下载的电影的标题
 

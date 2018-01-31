@@ -2,71 +2,49 @@
 import scrapy
 from First.items import FirstItem
 
+
 class SecondSpider(scrapy.Spider):
     name = 'second'
     allowed_domains = []
-    start_urls = ['https://www.lagou.com/']
+    start_urls = ['http://www.66ys.tv/']
 
-    cookie = {
-        "JSESSIONID": "ABAAABAAAGGABCB090F51A04758BF627C5C4146A091E618",
-        "_ga": "GA1.2.1916147411.1516780498",
-        "_gid": "GA1.2.405028378.1516780498",
-        "Hm_lvt_4233e74dff0ae5bd0a3d81c6ccf756e6": "1516780498",
-        "user_trace_token": "20180124155458-df9f65bb-00db-11e8-88b4-525400f775ce",
-        "LGUID": "20180124155458-df9f6ba5-00db-11e8-88b4-525400f775ce",
-        "X_HTTP_TOKEN": "98a7e947b9cfd07b7373a2d849b3789c",
-        "index_location_city": "%E5%85%A8%E5%9B%BD",
-        "TG-TRACK-CODE": "index_navigation",
-        "LGSID": "20180124175810-15b62bef-00ed-11e8-8e1a-525400f775ce",
-        "PRE_UTM": "",
-        "PRE_HOST": "",
-        "PRE_SITE": "https%3A%2F%2Fwww.lagou.com%2F",
-        "PRE_LAND": "https%3A%2F%2Fwww.lagou.com%2Fzhaopin%2FJava%2F%3FlabelWords%3Dlabel",
-        "_gat": "1",
-        "SEARCH_ID": "27bbda4b75b04ff6bbb01d84b48d76c8",
-        "Hm_lpvt_4233e74dff0ae5bd0a3d81c6ccf756e6": "1516788742",
-        "LGRID": "20180124181222-1160a244-00ef-11e8-a947-5254005c3644"
-    }
     def parse(self, response):
-        for item in response.xpath('//div[@class="menu_box"]/div/dl/dd/a'):
-            jobClass = item.xpath('text()').extract()
-            jobUrl = item.xpath("@href").extract_first()
-
+        for item in response.xpath('//div[@class="menutv"]/ul/li/a'):
+            movClass = item.xpath('text()').extract()
+            movUrl = item.xpath("@href").extract_first()
             oneItem = FirstItem()
-            oneItem["jobClass"] =jobClass
-            oneItem["jobUrl"] = jobUrl
-            for i in range(30):
-                jobUrl2 = jobUrl+str(i+1)
-                #print(jobUrl2)
-                try:
-                    yield scrapy.Request(url=jobUrl2, cookies=self.cookie, callback=self.parse_url)
-                except:
-                    pass
+            oneItem["movClass"] =movClass
+            oneItem["movUrl"] = movUrl
+            # for i in range(150):
+            #     mvUrl2 = movUrl+str('index_%s.html'%i)
+            #     try:
+            #         yield scrapy.Request(url=mvUrl2,
+            #                              callback=lambda response, mvclass=movClass: self.parse_url(response, mvclass))
+            #     except:
+            #         pass
+            yield scrapy.Request(url=movUrl,callback=lambda response,mvclass=movClass: self.parse_url(response,mvclass))
 
+    def parse_url(self, response,mvclass):
 
+        for sel2 in response.xpath('//div[@class="listBox"]/ul/li'):
+            imgurl = sel2.xpath("div/a/img/@src").extract()  # 电影海报链接
+            mvname = sel2.xpath('div/h3/a/text()').extract()#电影名字
+            mvurl = sel2.xpath("div/h3/a/@href").extract_first()#电影链接
+            yield scrapy.Request(url=mvurl, callback=lambda response,mvsclass =mvclass,img = imgurl,name = mvname: self.parse_mor(response, mvclass,img,name))
 
-    def parse_url(self,response):
-        for sel2 in response.xpath('//ul[@class="item_con_list"]/li'):
-            jobName = sel2.xpath('div/div/div/a/h3/text()').extract()
-            jobMoney = sel2.xpath('div/div/div/div/span/text()').extract()
+    def parse_mor(self, response, mvsclass,img,name):
+        for select in response.xpath('//div[@class="contentinfo"]'):
+            mvdownloadUrl = select.xpath("div/table/tbody/.//tr/td/a/@href").extract()#下载地址
+            mvdownloadPoster = select.xpath("div[@id='text']/p[1]/img/@src").extract()  # 海报图片地址
+            mvdtilte = select.xpath("div/table/tbody/.//tr/td/a/text()|div/table/tbody/.//tr/td/text()").extract()#下载标签的文本
+            mvdesc = select.xpath("div[@id='text']/.//p/text()|div[@id='text']/.//p/a/text()").extract()#/p[2]/text()
 
-            jobNeed = sel2.xpath('div/div/div/div/text()').extract()
-            jobNeed = jobNeed[2].strip()
-
-            jobCompany = sel2.xpath('div/div/div/a/text()').extract()
-            jobCompany = jobCompany[3].strip()
-
-            jobType = sel2.xpath('div/div/div/text()').extract()
-            jobType = jobType[7].strip()
-
-            jobSpesk = sel2.xpath('div[@class="list_item_bot"]/div/text()').extract()
-            jobSpesk = jobSpesk[-1].strip()
-
+            desc= str(mvdesc).replace('\\u3000','  ')
             Item = FirstItem()
-            Item["jobName"] = jobName
-            Item["jobMoney"] = jobMoney
-            Item["jobNeed"] = jobNeed
-            Item["jobCompany"] = jobCompany
-            Item["jobType"] = jobType
-            Item["jobSpesk"] = jobSpesk
+            Item['movClass'] = mvsclass
+            Item['downLoadName'] = name
+            Item['downdtitle'] = str(mvdtilte)
+            Item['downimgurl'] = mvdownloadPoster
+            Item['downLoadUrl'] =str(mvdownloadUrl)
+            Item['mvdesc'] = desc
             yield Item
